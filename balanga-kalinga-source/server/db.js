@@ -55,6 +55,8 @@ async function init() {
 
   // 2. Connection pool for the real work (dates come back as clean strings,
   //    matching how the app used SQLite's text timestamps).
+  //    connectionLimit is kept small so serverless platforms (Vercel) don't
+  //    exhaust the MySQL server with warm instances.
   const pool = mysql.createPool({
     host: DB_HOST,
     port: DB_PORT,
@@ -63,7 +65,9 @@ async function init() {
     database: DB_NAME,
     charset: 'utf8mb4',
     waitForConnections: true,
-    connectionLimit: 10,
+    connectionLimit: Number(process.env.DB_POOL_LIMIT || 5),
+    enableKeepAlive: true,
+    queueLimit: 20,
     dateStrings: true,
   });
 
@@ -580,9 +584,10 @@ try {
   db = await init();
 } catch (err) {
   console.error('\n[Balanga Kalinga] Could not connect to MySQL.\n');
-  console.error('Make sure XAMPP MySQL (MariaDB) is running, e.g. start the "mysql" service in the XAMPP Control Panel.\n');
+  console.error('Local: make sure XAMPP MySQL (MariaDB) is running (start "mysql" in the XAMPP Control Panel).');
+  console.error('Vercel: set DB_HOST, DB_USER, DB_PASSWORD, DB_NAME to point at a hosted MySQL database.\n');
   console.error('Error details:', err.code || err.message, '\n');
-  process.exit(1);
+  throw err;
 }
 
 export default db;

@@ -1,0 +1,10 @@
+node_modules
+client/node_modules
+server/node_modules
+server/client/node_modules
+.env
+*.log
+.DS_Store
+balanga-kalinga-source.zip
+*.zip
+download-project.ps1
