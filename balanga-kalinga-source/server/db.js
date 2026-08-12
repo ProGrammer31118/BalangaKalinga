@@ -12,6 +12,9 @@ const DB_USER = process.env.DB_USER || 'root';
 const DB_PASSWORD = process.env.DB_PASSWORD || '';
 const DB_NAME = process.env.DB_NAME || 'balanga_kalinga';
 
+// Aiven and many hosted providers require TLS. Enable with DB_SSL=true.
+const DB_TLS = process.env.DB_SSL === 'true' ? { ssl: { rejectUnauthorized: false } } : {};
+
 const VERSION = '3.0.0';
 
 // Small wrapper so every route keeps the familiar API:
@@ -47,6 +50,7 @@ async function init() {
     user: DB_USER,
     password: DB_PASSWORD,
     charset: 'utf8mb4',
+    ...DB_TLS,
   });
   await bootstrap.query(
     `CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
@@ -69,6 +73,7 @@ async function init() {
     enableKeepAlive: true,
     queueLimit: 20,
     dateStrings: true,
+    ...DB_TLS,
   });
 
   const db = makeAdapter(pool);
@@ -579,15 +584,55 @@ async function seedDemoData(db) {
   await insEmerg.run('Emergency (Police / Medical)', '911 / 112', 'For immediate threats to safety, call emergency services right away.', 'emergency', 1);
 }
 
-let db;
-try {
-  db = await init();
-} catch (err) {
-  console.error('\n[Balanga Kalinga] Could not connect to MySQL.\n');
-  console.error('Local: make sure XAMPP MySQL (MariaDB) is running (start "mysql" in the XAMPP Control Panel).');
-  console.error('Vercel: set DB_HOST, DB_USER, DB_PASSWORD, DB_NAME to point at a hosted MySQL database.\n');
-  console.error('Error details:', err.code || err.message, '\n');
-  throw err;
+let dbReady = null;
+let dbAdapter = null;
+
+function ensureDb() {
+  if (!dbReady) {
+    dbReady = (async () => {
+      try {
+        dbAdapter = await init();
+      } catch (err) {
+        console.error('\n[Balanga Kalinga] Could not connect to MySQL.\n');
+        console.error('Local: make sure XAMPP MySQL (MariaDB) is running (start "mysql" in the XAMPP Control Panel).');
+        console.error('Vercel: set DB_HOST, DB_USER, DB_PASSWORD, DB_NAME to point at a hosted MySQL database.\n');
+        console.error('Error details:', err.code || err.message, '\n');
+        dbReady = null; // allow retry on the next request
+        throw err;
+      }
+    })();
+  }
+  return dbReady;
 }
+
+// Lazy adapter so the app can boot even before MySQL is reachable.
+// On Vercel a missing DB returns a clean JSON error instead of crashing the function.
+const db = new Proxy(
+  {},
+  {
+    get(_target, prop) {
+      if (prop === 'prepare') {
+        return (sql) => {
+          const prepared = {
+            async get(...params) {
+              await ensureDb();
+              return dbAdapter.prepare(sql).get(...params);
+            },
+            async all(...params) {
+              await ensureDb();
+              return dbAdapter.prepare(sql).all(...params);
+            },
+            async run(...params) {
+              await ensureDb();
+              return dbAdapter.prepare(sql).run(...params);
+            },
+          };
+          return prepared;
+        };
+      }
+      return undefined;
+    },
+  }
+);
 
 export default db;
