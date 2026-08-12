@@ -116,7 +116,7 @@ async function init() {
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     mood VARCHAR(30) NOT NULL,
-    note TEXT DEFAULT '',
+    note TEXT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_mood_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`).run();
@@ -127,7 +127,7 @@ async function init() {
     title VARCHAR(200) DEFAULT '',
     content TEXT NOT NULL,
     mood VARCHAR(30) DEFAULT 'okay',
-    tags TEXT NOT NULL DEFAULT '[]',
+    tags TEXT NOT NULL,
     entry_date DATE,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -159,7 +159,7 @@ async function init() {
     title VARCHAR(120) NOT NULL,
     emoji VARCHAR(20) DEFAULT '🧘',
     description TEXT NOT NULL,
-    instructions TEXT NOT NULL DEFAULT '[]',
+    instructions TEXT NOT NULL,
     duration_min INT DEFAULT 5,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`).run();
@@ -179,7 +179,7 @@ async function init() {
     name VARCHAR(120) NOT NULL,
     specialization VARCHAR(120) NOT NULL,
     description TEXT NOT NULL,
-    schedule TEXT NOT NULL DEFAULT '[]',
+    schedule TEXT NOT NULL,
     avatar VARCHAR(20) DEFAULT '',
     color VARCHAR(20) DEFAULT '#4338ca',
     is_available TINYINT(1) NOT NULL DEFAULT 1,
@@ -193,9 +193,9 @@ async function init() {
     requested_date DATE NOT NULL,
     requested_time VARCHAR(20) NOT NULL,
     method VARCHAR(30) DEFAULT 'In-person',
-    notes TEXT DEFAULT '',
+    notes TEXT,
     status VARCHAR(30) DEFAULT 'pending',
-    status_note TEXT DEFAULT '',
+    status_note TEXT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_appt_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_appt_coun FOREIGN KEY (counselor_id) REFERENCES counselors(id)
