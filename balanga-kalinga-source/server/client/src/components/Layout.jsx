@@ -3,15 +3,15 @@ import { NavLink, Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const links = [
-  { to: '/app', label: 'Dashboard', icon: '🏠', end: true },
-  { to: '/app/assistant', label: 'Kalinga AI', icon: '💬' },
-  { to: '/app/wellness', label: 'Wellness Check', icon: '🧠' },
-  { to: '/app/journal', label: 'Journal', icon: '📔' },
-  { to: '/app/selfcare', label: 'Self-Care', icon: '🧘' },
-  { to: '/app/progress', label: 'My Progress', icon: '📊' },
-  { to: '/app/counseling', label: 'Counseling', icon: '📅' },
-  { to: '/app/notifications', label: 'Notifications', icon: '🔔' },
-  { to: '/app/profile', label: 'Profile', icon: '👤' },
+  { to: '/app', label: 'Dashboard', end: true },
+  { to: '/app/assistant', label: 'Kalinga AI' },
+  { to: '/app/wellness', label: 'Wellness Check' },
+  { to: '/app/journal', label: 'Journal' },
+  { to: '/app/selfcare', label: 'Self-Care' },
+  { to: '/app/progress', label: 'My Progress' },
+  { to: '/app/counseling', label: 'Counseling' },
+  { to: '/app/notifications', label: 'Notifications' },
+  { to: '/app/profile', label: 'Profile' },
 ];
 
 const mobilePrimary = ['/app', '/app/assistant', '/app/wellness', '/app/progress', '/app/profile'];
@@ -50,7 +50,6 @@ export default function Layout() {
               end={l.end}
               className={({ isActive }) => 'nav-item' + (isActive ? ' active' : '')}
             >
-              <span className="nav-icon">{l.icon}</span>
               <span className="nav-label">{l.label}</span>
               {l.to === '/app/notifications' && unread > 0 && (
                 <span className="nav-badge">{unread}</span>
@@ -62,13 +61,12 @@ export default function Layout() {
               to="/app/admin"
               className={({ isActive }) => 'nav-item' + (isActive ? ' active' : '')}
             >
-              <span className="nav-icon">🛡️</span>
               <span className="nav-label">Admin Panel</span>
             </NavLink>
           )}
         </nav>
         <div className="sidebar-bottom">
-          <Link className="get-help-btn" to="/get-help">🚨 Get Help Now</Link>
+          <Link className="get-help-btn" to="/get-help">Get Help Now</Link>
           <button className="logout" onClick={handleLogout}>Sign out</button>
         </div>
       </aside>
@@ -80,9 +78,9 @@ export default function Layout() {
             <strong>Balanga Kalinga</strong>
           </div>
           <div className="row">
-            <Link to="/get-help" className="get-help-mini">🚨</Link>
+            <Link to="/get-help" className="get-help-mini">Help</Link>
             <button className="mobile-avatar" onClick={() => navigate('/app/profile')}>
-              {user?.avatar || '🎓'}
+              {user?.avatar || ''}
             </button>
           </div>
         </header>
@@ -99,7 +97,6 @@ export default function Layout() {
                 end={to === '/app'}
                 className={({ isActive }) => 'bottom-item' + (isActive ? ' active' : '')}
               >
-                <span className="bottom-icon">{link.icon}</span>
                 <span className="bottom-label">{link.label}</span>
               </NavLink>
             );

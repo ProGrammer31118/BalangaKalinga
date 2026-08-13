@@ -8,3 +8,5 @@ server/client/node_modules
 balanga-kalinga-source.zip
 *.zip
 download-project.ps1
+.vercel
+.env*
