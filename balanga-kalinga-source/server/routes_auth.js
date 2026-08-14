@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
 import db from './db.js';
 import { signToken, authRequired } from './middleware.js';
+import { sendEmail, resetPasswordEmail } from './email.js';
 
 const router = Router();
 
@@ -27,38 +28,6 @@ function publicUser(u) {
     consent_at: u.consent_at,
     created_at: u.created_at,
   };
-}
-
-async function sendResetEmail(to, resetUrl) {
-  const key = process.env.BREVO_API_KEY;
-  if (!key) {
-    throw new Error('BREVO_API_KEY is not set');
-  }
-  const senderEmail = process.env.BREVO_SENDER_EMAIL || 'noreply@balangakalinga.app';
-  const senderName = process.env.BREVO_SENDER_NAME || 'Balanga Kalinga';
-  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
-    method: 'POST',
-    headers: { 'api-key': key, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      sender: { name: senderName, email: senderEmail },
-      to: [{ email: to }],
-      subject: 'Reset your Balanga Kalinga password',
-      htmlContent: `
-        <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#1f2937">
-          <h2 style="margin:0 0 12px">Reset your password</h2>
-          <p>We received a request to reset your Balanga Kalinga password.</p>
-          <p>Click the button below to choose a new password. This link expires in <strong>1 hour</strong>.</p>
-          <p style="margin:24px 0">
-            <a href="${resetUrl}" style="display:inline-block;background:#4338ca;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600">Reset password</a>
-          </p>
-          <p style="color:#6b7280;font-size:13px">If you did not request this, you can safely ignore this email.</p>
-          <p style="color:#9ca3af;font-size:12px;margin-top:24px">Balanga Kalinga · AI Wellness for Students</p>
-        </div>`,
-    }),
-  });
-  if (!res.ok) {
-    throw new Error(`Brevo error ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  }
 }
 
 router.post('/register', async (req, res) => {
@@ -146,12 +115,8 @@ router.post('/forgot-password', async (req, res) => {
   const base = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
   const resetUrl = `${base.replace(/\/$/, '')}/reset-password?token=${token}`;
 
-  try {
-    await sendResetEmail(emailKey, resetUrl);
-  } catch (err) {
-    console.error('Failed to send reset email:', err.message);
-    return res.status(500).json({ error: 'Could not send the reset email. Check the SMTP configuration.' });
-  }
+  const { subject, html } = resetPasswordEmail(resetUrl);
+  await sendEmail(emailKey, subject, html);
 
   res.json({ ok: true });
 });

@@ -1,9 +1,18 @@
 import { Router } from 'express';
 import db from './db.js';
 import { authRequired } from './middleware.js';
+import { sendEmail, appointmentRequestEmail, appointmentDecisionEmail } from './email.js';
 
 const router = Router();
 router.use(authRequired);
+
+async function notifyAdmins(title, message, link = '/admin?tab=appointments') {
+  const admins = await db.prepare('SELECT id FROM users WHERE role = ?').all('admin');
+  const ins = db.prepare('INSERT INTO notifications (user_id, title, message, type, link) VALUES (?, ?, ?, ?, ?)');
+  for (const a of admins) {
+    await ins.run(a.id, title, message, 'info', link);
+  }
+}
 
 // Available counselors (public catalog for students)
 router.get('/counselors', async (req, res) => {
@@ -66,6 +75,17 @@ router.post('/appointments', async (req, res) => {
     'info',
     '/app/counseling'
   );
+  // Email confirmation + alert admins (only if email notifications are enabled)
+  const user = await db.prepare('SELECT name, email FROM users WHERE id = ?').get(req.user.id);
+  const prefs = (() => { try { return JSON.parse(user.notif_prefs || '{}'); } catch { return {}; } })();
+  if (prefs.appointments !== false && user.email) {
+    const { subject, html } = appointmentRequestEmail(user.name, counselor.name, requested_date, requested_time, method);
+    await sendEmail(user.email, subject, html);
+  }
+  await notifyAdmins(
+    'New appointment request',
+    `${user.name} requested an appointment with ${counselor.name} on ${requested_date} at ${requested_time}.`
+  );
   res.status(201).json({ appointment: row });
 });
 
@@ -77,6 +97,11 @@ router.patch('/appointments/:id/cancel', async (req, res) => {
   if (!existing) return res.status(404).json({ error: 'Appointment not found' });
   if (existing.status === 'cancelled') return res.status(400).json({ error: 'Appointment already cancelled' });
   await db.prepare("UPDATE appointments SET status = 'cancelled', status_note = 'Cancelled by student' WHERE id = ?").run(existing.id);
+  const counselorRow = await db.prepare('SELECT name FROM counselors WHERE id = ?').get(existing.counselor_id);
+  await notifyAdmins(
+    'Appointment cancelled',
+    `A student cancelled their appointment with ${counselorRow ? counselorRow.name : 'a counselor'} scheduled for ${existing.requested_date} at ${existing.requested_time}.`
+  );
   res.json({ ok: true });
 });
 
@@ -105,6 +130,16 @@ router.patch('/appointments/:id/reschedule', async (req, res) => {
     `Your appointment with ${row.counselor_name} is now set for ${requested_date} at ${requested_time}.`,
     'info',
     '/app/counseling'
+  );
+  const user = await db.prepare('SELECT name, email FROM users WHERE id = ?').get(req.user.id);
+  const prefs = (() => { try { return JSON.parse(user.notif_prefs || '{}'); } catch { return {}; } })();
+  if (prefs.appointments !== false && user.email) {
+    const { subject, html } = appointmentRequestEmail(user.name, row.counselor_name, requested_date, requested_time, row.method);
+    await sendEmail(user.email, 'Your appointment was rescheduled — Balanga Kalinga', html.replace(/received\./i, 'was updated.'));
+  }
+  await notifyAdmins(
+    'Appointment rescheduled',
+    `${user.name} rescheduled their appointment with ${row.counselor_name} to ${requested_date} at ${requested_time}.`
   );
   res.json({ appointment: row });
 });

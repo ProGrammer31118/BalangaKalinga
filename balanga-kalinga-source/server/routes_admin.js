@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import db from './db.js';
 import { authRequired, adminOnly } from './middleware.js';
+import { sendEmail, appointmentDecisionEmail } from './email.js';
 
 const router = Router();
 router.use(authRequired, adminOnly);
@@ -168,6 +169,24 @@ router.patch('/appointments/:id', async (req, res) => {
   await db.prepare('INSERT INTO notifications (user_id, title, message, type, link) VALUES (?, ?, ?, ?, ?)').run(
     existing.user_id, title, msg, status === 'approved' ? 'success' : 'info', '/app/counseling'
   );
+  // Email the student the decision
+  if (status === 'approved' || status === 'declined' || status === 'completed' || status === 'cancelled') {
+    try {
+      const student = await db.prepare('SELECT name, email, notif_prefs FROM users WHERE id = ?').get(existing.user_id);
+      const prefs = (() => { try { return JSON.parse(student.notif_prefs || '{}'); } catch { return {}; } })();
+      if (student && student.email && prefs.appointments !== false) {
+        const counselor = await db.prepare('SELECT name FROM counselors WHERE id = ?').get(existing.counselor_id);
+        const { subject, html } = appointmentDecisionEmail(
+          student.name, counselor ? counselor.name : 'your counselor',
+          existing.requested_date, existing.requested_time, existing.method,
+          status === 'approved', status_note || ''
+        );
+        await sendEmail(student.email, subject, html);
+      }
+    } catch (err) {
+      console.warn('[counseling] decision email failed:', err.message);
+    }
+  }
   res.json({ ok: true });
 });
 
