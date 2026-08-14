@@ -19,6 +19,8 @@ async function api(path, { method = 'GET', body, token } = {}) {
 export const authApi = {
   login: (body) => api('/auth/login', { method: 'POST', body }),
   register: (body) => api('/auth/register', { method: 'POST', body }),
+  forgotPassword: (email) => api('/auth/forgot-password', { method: 'POST', body: { email } }),
+  resetPassword: (token, password) => api('/auth/reset-password', { method: 'POST', body: { token, password } }),
   me: (token) => api('/auth/me', { token }),
   updateMe: (token, body) => api('/auth/me', { method: 'PATCH', body, token }),
   changePassword: (token, body) => api('/auth/change-password', { method: 'POST', body, token }),

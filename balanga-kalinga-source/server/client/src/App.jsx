@@ -7,6 +7,7 @@ import Login from './pages/Login.jsx';
 import StaffLogin from './pages/StaffLogin.jsx';
 import Register from './pages/Register.jsx';
 import ForgotPassword from './pages/ForgotPassword.jsx';
+import ResetPassword from './pages/ResetPassword.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Assistant from './pages/Assistant.jsx';
 import Assessment from './pages/Assessment.jsx';
@@ -80,6 +81,7 @@ export default function App() {
       <Route path="/staff-login" element={<StaffLogin />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/get-help" element={<GetHelp />} />
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/terms" element={<Terms />} />
