@@ -30,19 +30,20 @@ function publicUser(u) {
 }
 
 async function sendResetEmail(to, resetUrl) {
-  const key = process.env.RESEND_API_KEY;
+  const key = process.env.BREVO_API_KEY;
   if (!key) {
-    throw new Error('RESEND_API_KEY is not set');
+    throw new Error('BREVO_API_KEY is not set');
   }
-  const from = process.env.RESEND_FROM || 'Balanga Kalinga <onboarding@resend.dev>';
-  const res = await fetch('https://api.resend.com/emails', {
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || 'noreply@balangakalinga.app';
+  const senderName = process.env.BREVO_SENDER_NAME || 'Balanga Kalinga';
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+    headers: { 'api-key': key, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from,
-      to: [to],
+      sender: { name: senderName, email: senderEmail },
+      to: [{ email: to }],
       subject: 'Reset your Balanga Kalinga password',
-      html: `
+      htmlContent: `
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#1f2937">
           <h2 style="margin:0 0 12px">Reset your password</h2>
           <p>We received a request to reset your Balanga Kalinga password.</p>
@@ -56,7 +57,7 @@ async function sendResetEmail(to, resetUrl) {
     }),
   });
   if (!res.ok) {
-    throw new Error(`Resend error ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    throw new Error(`Brevo error ${res.status}: ${(await res.text()).slice(0, 300)}`);
   }
 }
 
