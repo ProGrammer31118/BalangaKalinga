@@ -1,6 +1,9 @@
 /* ============ Balanga Kalinga — design system ============ */
-:root {
-  --bg: #f5f7fb;
+/* Prevent iOS auto-zoom when focusing inputs (16px+ is required) */
+input, select, textarea {
+  font-size: 16px;
+}
+:root {  --bg: #f5f7fb;
   --card: #ffffff;
   --border: #e7ebf3;
   --text: #1c2534;
