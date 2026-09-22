@@ -3,6 +3,5 @@
   "outputDirectory": ".next",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
-  "framework": "nextjs",
-  "rootDirectory": "balanga-kalinga-nextjs"
+  "framework": "nextjs"
 }
