@@ -1,0 +1,19 @@
+{
+  "name": "balanga-kalinga-nextjs",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Balanga Kalinga — Next.js + React port of balanga-kalinga-php (same MySQL database)",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.11.0",
+    "next": "^14.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}
